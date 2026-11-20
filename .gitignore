@@ -84,3 +84,5 @@ $RECYCLE.BIN/
 /src/executable/web/*
 !/src/executable/web/README.txt
 /src/executable/*.syso
+
+.DS_Store
