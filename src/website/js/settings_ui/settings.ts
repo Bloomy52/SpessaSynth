@@ -465,7 +465,7 @@ export class SpessaSynthSettings {
         // If window.savedSettings exists, load it
         void this.loadSettings().then(() => {
             this.createHandlers();
-            this.synthui.effectMutes.onChange.push(() => this.saveSettings());
+            this.createEffectMuteHandlers();
         });
 
         let fullscreen = false;
@@ -604,6 +604,36 @@ export class SpessaSynthSettings {
         this.createKeyboardHandler();
 
         this.createInterfaceSettingsHandler();
+    }
+
+    private createEffectMuteHandlers() {
+        const mutes = this.synthui.effectMutes;
+        const toggles = {
+            reverbGain: document.querySelector<HTMLInputElement>(
+                "#mute_reverb_toggler"
+            )!,
+            chorusGain: document.querySelector<HTMLInputElement>(
+                "#mute_chorus_toggler"
+            )!
+        } as const;
+        for (const [effect, toggle] of Object.entries(toggles) as [
+            keyof typeof toggles,
+            HTMLInputElement
+        ][]) {
+            toggle.checked = mutes.isMuted(effect);
+            toggle.addEventListener("change", () =>
+                mutes.setMuted(effect, toggle.checked)
+            );
+        }
+        mutes.onChange.push(() => {
+            for (const [effect, toggle] of Object.entries(toggles) as [
+                keyof typeof toggles,
+                HTMLInputElement
+            ][]) {
+                toggle.checked = mutes.isMuted(effect);
+            }
+            this.saveSettings();
+        });
     }
 
     public setTimeDelay(fft: number) {

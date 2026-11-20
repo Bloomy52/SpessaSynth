@@ -234,6 +234,26 @@ export const settingsHtml = `
     
     
     <div class='settings_group'>
+        <h2 translate-path='locale.settings.effectSettings.title'></h2>
+        <div class='switch_label setting'>
+            <label for='mute_reverb_toggler' translate-path-title='locale.settings.effectSettings.muteReverb'></label>
+            <label class='switch'>
+                <input type='checkbox' id='mute_reverb_toggler'>
+                <span class='switch_slider'></span>
+            </label>
+        </div>
+
+        <div class='switch_label setting'>
+            <label for='mute_chorus_toggler' translate-path-title='locale.settings.effectSettings.muteChorus'></label>
+            <label class='switch'>
+                <input type='checkbox' id='mute_chorus_toggler'>
+                <span class='switch_slider'></span>
+            </label>
+        </div>
+    </div>
+
+
+    <div class='settings_group'>
         <h2 translate-path='locale.settings.interfaceSettings.title'></h2>
         <div class='setting setting_select'><label for='theme_selector' translate-path-title='locale.settings.interfaceSettings.theme'></label>
         <select id='theme_selector'>

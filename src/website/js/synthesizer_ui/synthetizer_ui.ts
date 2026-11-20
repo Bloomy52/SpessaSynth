@@ -682,30 +682,6 @@ export class SynthesizerUI {
             // Tab selector
             controlsWrapper.append(tabSelector);
 
-            // Global effect mutes stay accessible in both GS and XG modes.
-            for (const effect of ["reverbGain", "chorusGain"] as const) {
-                const label = document.createElement("label");
-                label.classList.add("synthui_button");
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                const text = document.createElement("span");
-                const localePath = LOCALE_PATH + "effectMutes." + effect;
-                this.locale.bindObjectProperty(
-                    text,
-                    "textContent",
-                    localePath + ".title"
-                );
-                this.locale.bindTooltip(label, localePath + ".description");
-                checkbox.addEventListener("change", () =>
-                    this.effectMutes.setMuted(effect, checkbox.checked)
-                );
-                this.effectMutes.onChange.push(() => {
-                    checkbox.checked = this.effectMutes.isMuted(effect);
-                });
-                label.append(checkbox, text);
-                controlsWrapper.append(label);
-            }
-
             this.mainMeters = [
                 this.volumeController,
                 this.panController,
