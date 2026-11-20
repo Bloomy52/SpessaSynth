@@ -2,6 +2,7 @@
 import type { SynthCoreConfig } from "spessasynth_lib";
 import { WorkerSynthesizerCore } from "spessasynth_lib";
 import { encodeVorbis } from "./export/utils/encode_compressed_audio.ts";
+import { installDrumPresetFallback } from "../utils/drum_preset_fallback.ts";
 
 let workerSynthCore: WorkerSynthesizerCore;
 
@@ -16,6 +17,7 @@ onmessage = (e) => {
             postMessage.bind(this),
             encodeVorbis
         );
+        installDrumPresetFallback(workerSynthCore.synthesizer);
         return;
     }
     const message = e.data as {

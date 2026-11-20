@@ -64,14 +64,32 @@ export async function buildSpessaSynth() {
         path.resolve(LOCAL_DIR, "local_edition_index.html")
     );
 
-    // Worklet
-    await fs.cp(WORKLET_PATH, path.resolve(DEMO_DIR, WORKLET_NAME));
-    await fs.cp(WORKLET_PATH, path.resolve(LOCAL_DIR, WORKLET_NAME));
-    // Sourcemap
-    await fs.cp(
-        WORKLET_PATH + ".map",
-        path.resolve(LOCAL_DIR, WORKLET_NAME + ".map")
+    // Install the same preset fallback in the prebundled audio worklet.
+    const workletSource = await fs.readFile(WORKLET_PATH, "utf8");
+    const registration = "registerProcessor(";
+    if (workletSource.split(registration).length !== 2) {
+        throw new Error("Expected one synthesizer worklet registration.");
+    }
+    const fallbackModule = path.resolve(
+        WEBSITE_SRC_DIR,
+        "js/utils/worklet_drum_preset_fallback.ts"
     );
+    const localWorkletPath = path.resolve(LOCAL_DIR, WORKLET_NAME);
+    await esbuild.build({
+        stdin: {
+            contents:
+                `import { registerSynthProcessor } from ${JSON.stringify(fallbackModule)};\n` +
+                workletSource.replace(registration, "registerSynthProcessor("),
+            sourcefile: WORKLET_PATH,
+            resolveDir: path.dirname(WORKLET_PATH)
+        },
+        outfile: localWorkletPath,
+        bundle: true,
+        minify: true,
+        format: "esm",
+        sourcemap: "linked"
+    });
+    await fs.cp(localWorkletPath, path.resolve(DEMO_DIR, WORKLET_NAME));
 
     // Favicon
     await fs.cp(
@@ -103,7 +121,7 @@ export async function buildSpessaSynth() {
 
     const workletHash = crypto
         .createHash("sha256")
-        .update(await fs.readFile(WORKLET_PATH))
+        .update(await fs.readFile(localWorkletPath))
         .digest("hex")
         .slice(0, 8);
 

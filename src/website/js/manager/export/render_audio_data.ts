@@ -15,6 +15,7 @@ import { ReverbCapture } from "./utils/reverb_capture.ts";
 import { makeAudioBuffer } from "./utils/make_audio_buffer.ts";
 import { decodeDefaultImpulseResponse } from "../../reverb/compressed_reverb_decoder.ts";
 import type { VideoSynthData } from "../../renderer/offline/events.ts";
+import { installDrumPresetFallback } from "../../utils/drum_preset_fallback.ts";
 
 type RenderAudioOptions = (NonNullable<
     Parameters<typeof WorkerSynthesizer.prototype.renderAudio>[1]
@@ -104,6 +105,7 @@ export async function renderAudioData(
         effectsEnabled: true,
         gsReverbProcessor: reverbCapture
     });
+    installDrumPresetFallback(rendererSynth);
     console.info("Parsing and loading the sound bank in the main thread.");
     // Worker mode transfers (detaches) the main-thread bank at load.
     // Copy it back from the worker only when a main-thread render needs it.
