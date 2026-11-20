@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: Build changes for preset fallback.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import path from "node:path";
 import fs from "node:fs/promises";
 import crypto from "node:crypto";

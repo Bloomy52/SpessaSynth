@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: Effect send handling, reverb fixes, build fixes.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import type { LiveKeyboard } from "../canvas_keyboard/live/live_keyboard.ts";
 import {
     Sequencer,

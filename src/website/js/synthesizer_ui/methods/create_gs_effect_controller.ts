@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: GS effect controller respects the global mute.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import type {
     GSChorusParams,
     GSDelayParams,

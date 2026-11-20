@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: Channel 10 preset fallback.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 /// <reference lib="webworker" />
 import type { SynthCoreConfig } from "spessasynth_lib";
 import { WorkerSynthesizerCore } from "spessasynth_lib";

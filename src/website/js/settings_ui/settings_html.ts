@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: Settings markup for the effect mute toggles.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 /**
  * Settings_html.js
  * purpose: the inner HTML for the settings element

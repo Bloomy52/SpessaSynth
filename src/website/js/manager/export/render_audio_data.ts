@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: Channel 10 fallback during export.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import { WorkerSynthesizer } from "spessasynth_lib";
 import type { Manager } from "../manager.ts";
 import {

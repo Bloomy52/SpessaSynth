@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: Save the effect mute state.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import { USE_MIDI_RANGE } from "../handlers/keyboard_handler.js";
 import type { SpessaSynthSettings } from "../settings.ts";
 import type {

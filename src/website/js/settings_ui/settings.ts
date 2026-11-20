@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: Reverb and Chorus mute toggles in program settings.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import { settingsHtml } from "./settings_html.js";
 import { getDownArrowSvg, getGearSvg } from "../utils/icons.js";
 import { _loadSettings } from "./saving/load_settings.js";

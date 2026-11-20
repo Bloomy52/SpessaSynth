@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: Reverb controller respects the global mute.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import { Meter } from "./synthui_meter.ts";
 import { LOCALE_PATH, SynthesizerUI } from "../synthetizer_ui.ts";
 import { showNotification } from "../../notification/notification.js";

@@ -1,3 +1,6 @@
+// Modified by Louie (Bloomy52), 2026: 	Persist the reverb and chorus mute state.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import type { LocaleCode } from "../website/locale/locale_list.ts";
 import {
     DEFAULT_EFFECT_MUTES,
