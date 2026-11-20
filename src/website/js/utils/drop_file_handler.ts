@@ -1,3 +1,5 @@
+import { Ut } from "./other.ts";
+
 export interface MIDIFile {
     binary: ArrayBuffer;
     fileName: string;
@@ -12,12 +14,25 @@ export class DropFileHandler {
         soundFontCallback: (arg0: ArrayBuffer) => unknown
     ) {
         const dragPrompt = document.querySelectorAll(".drop_prompt")[0];
+        let dragCounter = 0;
         document.body.addEventListener("dragover", (e) => {
             e.preventDefault();
-            dragPrompt.classList.remove("hidden");
+        });
+        document.body.addEventListener("dragenter", (e) => {
+            e.preventDefault();
+            dragCounter++;
+            Ut.show(dragPrompt);
+        });
+        document.body.addEventListener("dragleave", () => {
+            dragCounter--;
+            if (dragCounter <= 0) {
+                dragCounter = 0;
+                Ut.hide(dragPrompt);
+            }
         });
         document.body.addEventListener("dragend", () => {
-            dragPrompt.classList.add("hidden");
+            dragCounter = 0;
+            Ut.hide(dragPrompt);
         });
 
         document.body.addEventListener(
@@ -25,7 +40,8 @@ export class DropFileHandler {
             (e) =>
                 void (async (e) => {
                     e.preventDefault();
-                    dragPrompt.classList.add("hidden");
+                    dragCounter = 0;
+                    Ut.hide(dragPrompt);
                     if (!e.dataTransfer?.files[0]) {
                         return;
                     }
@@ -39,7 +55,8 @@ export class DropFileHandler {
                         // Check for RIFF
                         const riff = buf.slice(0, 4);
                         const decoder = new TextDecoder();
-                        if (decoder.decode(riff) === "RIFF") {
+                        const fourcc = decoder.decode(riff);
+                        if (fourcc === "RIFF" || fourcc === "RIFS") {
                             // Riff, check if RMID, otherwise soundfont
                             const rmid = buf.slice(8, 12);
                             if (decoder.decode(rmid) === "RMID") {

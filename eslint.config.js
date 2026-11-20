@@ -1,18 +1,20 @@
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
-import eslintConfigPrettier from "eslint-config-prettier";
+import eslintConfigPrettier from "eslint-config-prettier/flat";
+import eslint from "@eslint/js";
 
 export default tseslint.config(
-    { ignores: ["dist", "src/externals/sl-web-ogg"] },
+    { ignores: ["dist"] },
     {
         extends: [
+            eslint.configs.recommended,
             tseslint.configs.recommendedTypeChecked,
             tseslint.configs.stylisticTypeChecked,
             eslintPluginUnicorn.configs.recommended,
             eslintConfigPrettier
         ],
-        files: ["**/*.{ts,tsx}"],
+        files: ["src/**/*.{ts,tsx}"],
         languageOptions: {
             ecmaVersion: "latest",
             globals: globals.browser,
@@ -22,6 +24,8 @@ export default tseslint.config(
             }
         },
         rules: {
+            eqeqeq: "error",
+            "no-fallthrough": ["error", { allowEmptyCase: true }],
             "@typescript-eslint/no-unused-vars": "error",
             "@typescript-eslint/explicit-member-accessibility": "error",
             "@typescript-eslint/no-deprecated": "error",
@@ -29,7 +33,7 @@ export default tseslint.config(
                 "error",
                 "always",
                 {
-                    ignorePattern: "noinspection"
+                    ignorePattern: "noinspection|prettier"
                 }
             ],
             "@typescript-eslint/no-misused-promises": [
@@ -74,7 +78,10 @@ export default tseslint.config(
             "unicorn/prefer-spread": "off",
 
             // This breaks a ton of TypeScript things
-            "unicorn/prefer-global-this": "off"
+            "unicorn/prefer-global-this": "off",
+
+            // We are targeting ES2022
+            "unicorn/no-array-sort": "off"
         }
     }
 );

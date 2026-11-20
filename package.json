@@ -1,30 +1,36 @@
 {
     "name": "SpessaSynth",
-    "version": "4.1.10",
+    "version": "4.4.6",
     "type": "module",
     "private": true,
     "scripts": {
-        "perms": "chmod +x src/build/*",
-        "test:types": "eslint --cache && tsc -b",
+        "test:types": "eslint && tsc -b",
         "start": "node src/build/start.ts",
         "build": "npm run test:types && npm run build:fast",
         "build:fast": "node src/build/build.ts",
-        "debug": "src/build/enable_debug.sh",
-        "release": "src/build/disable_debug.sh",
-        "clean": "rm -rf dist; rm -rf local-dev; rm -rf server"
+        "format": "prettier . --write --list-different",
+        "dev": "node src/build/dev.ts",
+        "release": "node src/build/release.ts",
+        "video": "tsx src/cli_video/index.ts",
+        "clean": "node -e \"const fs=require('fs/promises'); Promise.all([fs.rm('dist',{recursive:true,force:true}), fs.rm('local-dev',{recursive:true,force:true}), fs.rm('server',{recursive:true,force:true})])\"",
+        "prepare": "husky",
+        "build:binary": "node src/build/build_binary.ts"
     },
     "devDependencies": {
-        "@chialab/esbuild-plugin-meta-url": "^0.18.2",
-        "@eslint/js": "^9.33.0",
-        "@types/node": "^24.2.1",
-        "esbuild": "^0.25.2",
-        "eslint": "^9.33.0",
+        "@chialab/esbuild-plugin-meta-url": "^0.19.2",
+        "@eslint/js": "^10.0.1",
+        "@types/node": "^26.6.5",
+        "esbuild": "^0.28.2",
+        "eslint": "^10.13.0",
         "eslint-config-prettier": "^10.1.8",
-        "eslint-plugin-unicorn": "^62.0.0",
-        "globals": "^16.3.0",
-        "prettier": "^3.6.2",
-        "typescript": "^5.9.2",
-        "typescript-eslint": "^8.39.0"
+        "eslint-plugin-unicorn": "^64.0.0",
+        "globals": "^17.13.0",
+        "husky": "^9.1.7",
+        "lint-staged": "^17.6.0",
+        "prettier": "^3.9.10",
+        "skia-canvas": "^4.0.0",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.72.1"
     },
     "lint-staged": {
         "*.{ts,js}": [
@@ -34,8 +40,14 @@
         "*.{html,json,md,yml,yaml,css}": "prettier --write"
     },
     "dependencies": {
-        "jszip": "^3.10.1",
+        "fflate": "^0.8.3",
+        "jszip": "^3.10.2",
+        "mediabunny": "^1.64.0",
         "spessasynth_core": "latest",
-        "spessasynth_lib": "latest"
+        "spessasynth_lib": "latest",
+        "wasm-media-encoders": "^0.7.0"
+    },
+    "allowScripts": {
+        "esbuild@0.28.2": true
     }
 }

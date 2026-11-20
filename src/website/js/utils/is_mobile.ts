@@ -1,6 +1,10 @@
 // noinspection RegExpRedundantEscape,JSDeprecatedSymbols,RegExpSingleCharAlternation
+/* eslint-disable no-useless-escape */
 
 function checkMobile() {
+    if (typeof navigator === "undefined") {
+        return false;
+    }
     let check = false;
     (function (a: string) {
         if (

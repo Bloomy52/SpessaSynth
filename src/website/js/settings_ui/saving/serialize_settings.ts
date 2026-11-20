@@ -3,25 +3,29 @@ import type { SpessaSynthSettings } from "../settings.ts";
 import type {
     LayoutType,
     SavedSettings
-} from "../../../server/saved_settings.ts";
-import type { LocaleCode } from "../../locale/locale_files/locale_list.ts";
+} from "../../../../server/saved_settings.ts";
+import type { LocaleCode } from "../../../locale/locale_list.ts";
 
 /**
  * Serializes settings into a nice object
- * @private
- * @returns {SavedSettings}
- * @this {SpessaSynthSettings}
  */
 export function _serializeSettings(this: SpessaSynthSettings): SavedSettings {
+    // Ensure valid locale
+    const loc =
+        this.htmlControls.interface.languageSelector.value === "help-translate"
+            ? "en"
+            : (this.htmlControls.interface.languageSelector
+                  .value as LocaleCode);
     return {
         renderer: {
             renderingMode: this.renderer.rendererMode,
-            noteFallingTimeMs: this.renderer.noteFallingTimeMs,
-            noteAfterTriggerTimeMs: this.renderer.noteAfterTriggerTimeMs,
+            noteFallingTime: this.renderer.noteFallingTime,
+            noteAfterTriggerTime: this.renderer.noteAfterTriggerTime,
             waveformThickness: this.renderer.lineThickness,
-            sampleSize: this.renderer.normalAnalyserFft,
-            amplifier: this.renderer.waveMultiplier,
+            sampleSize: this.renderer.analyserFftSize,
+            waveMultiplier: this.renderer.waveMultiplier,
             renderNotes: this.renderer.renderNotes,
+            showPresetNames: this.renderer.showPresetNames,
             drawActiveNotes: this.renderer.drawActiveNotes,
             showVisualPitch: this.renderer.showVisualPitch,
             renderDotDisplay: this.renderer.renderDotDisplay,
@@ -29,31 +33,34 @@ export function _serializeSettings(this: SpessaSynthSettings): SavedSettings {
             dynamicGain: this.renderer.dynamicGain,
             exponentialGain: this.renderer.exponentialGain,
             logarithmicFrequency: this.renderer.logarithmicFrequency,
+            renderOnlyUsed: this.renderer.renderOnlyUsed,
             keyRange: this.renderer.keyRange
         },
 
         keyboard: {
             selectedChannel: this.midiKeyboard.channel,
-            keyRange: this.midiKeyboard.keyRange,
-            mode: this.midiKeyboard.mode,
+            // The keyboard holds the display range, which is wider during a transition
+            // Save the actual one
+            keyRange: this.renderer.keyRange,
+            theme: this.midiKeyboard.targetTheme,
             autoRange:
-                this.htmlControls.keyboard.sizeSelector.value ===
-                USE_MIDI_RANGE,
-            show: this.htmlControls.keyboard.showSelector.checked,
+                this.htmlControls.keyboard.keyRange.value === USE_MIDI_RANGE,
+            show: this.htmlControls.keyboard.shown.checked,
             forceMaxVelocity:
-                this.htmlControls.keyboard.maxVelocitySelector.checked
+                this.htmlControls.keyboard.forceMaxVelocity.checked,
+            glow: this.midiKeyboard.glow,
+            glowIntensity: this.midiKeyboard.glowIntensity
         },
 
         midi: {
-            // Dont save these!
+            // Don't save these!
             input: null,
             output: null
         },
 
         interface: {
-            mode: this.mode,
-            language: this.htmlControls.interface.languageSelector
-                .value as LocaleCode,
+            theme: this.theme,
+            language: loc,
             layout: this.htmlControls.interface.layoutSelector
                 .value as LayoutType
         }

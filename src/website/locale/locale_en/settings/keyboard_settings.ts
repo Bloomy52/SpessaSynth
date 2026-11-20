@@ -1,0 +1,48 @@
+export const keyboardSettingsLocale = {
+    title: "MIDI Keyboard settings",
+
+    selectedChannel: {
+        title: "Selected channel",
+        description: "The channel keyboard sends messages to",
+        channelOption: "Channel {0}"
+    },
+
+    keyboardSize: {
+        title: "Keyboard size",
+        description:
+            "The range of keys shown on the keyboard. Adjusts the MIDI note size accordingly",
+
+        full: "128 keys (full)",
+        piano: "88 keys (piano)",
+        fiveOctaves: "5 octaves",
+        useSongKeyRange: "Use song's key range",
+        twoOctaves: "Two octaves"
+    },
+
+    theme: {
+        title: "Keyboard theme",
+        description:
+            "The look of the MIDI keyboard, independent of the interface theme"
+    },
+
+    show: {
+        title: "Show",
+        description: "Show/hide MIDI keyboard"
+    },
+
+    forceMaxVelocity: {
+        title: "Force full color",
+        description:
+            "Force full color intensity, regardless of the MIDI note-on velocity"
+    },
+
+    glow: {
+        title: "Enable glow",
+        description: "Make the pressed keys glow"
+    },
+
+    glowIntensity: {
+        title: "Glow intensity",
+        description: "The brightness and reach of the pressed key glow"
+    }
+};

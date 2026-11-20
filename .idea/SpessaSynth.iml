@@ -8,6 +8,8 @@
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/disabled_sf2s" />
       <excludeFolder url="file://$MODULE_DIR$/.idea/dictionaries" />
+      <excludeFolder url="file://$MODULE_DIR$/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/soundfonts" />
       <excludeFolder url="file://$MODULE_DIR$/soundfonts/.ark-.ZIyEGv" />
       <excludeFolder url="file://$MODULE_DIR$/soundfonts/.ark-.hcTDoq" />
       <excludeFolder url="file://$MODULE_DIR$/soundfonts/FluidR3Mono" />
@@ -18,8 +20,6 @@
       <excludeFolder url="file://$MODULE_DIR$/local-dev" />
       <excludeFolder url="file://$MODULE_DIR$/local-edition-build" />
       <excludeFolder url="file://$MODULE_DIR$/server" />
-      <excludeFolder url="file://$MODULE_DIR$/src/externals/libvorbis" />
-      <excludeFolder url="file://$MODULE_DIR$/src/externals/sl-web-ogg" />
       <excludeFolder url="file://$MODULE_DIR$/soundfonts/TESTS" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.10" jdkType="Python SDK" />

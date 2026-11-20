@@ -6,21 +6,23 @@ import {
 } from "../utils/icons.js";
 import {
     closeNotification,
-    type NotificationContent,
     showNotification
 } from "../notification/notification.js";
 import { ANIMATION_REFLOW_TIME } from "../utils/animation_utils.js";
-import { LocaleManager } from "../locale/locale_manager.js";
+import { LocaleManager } from "../manager/locale_manager.js";
 
 import { BasicSoundBank } from "spessasynth_core";
-import { WHATS_NEW } from "../../changelog.js";
-import type { LocaleCode } from "../locale/locale_files/locale_list.ts";
+import { UPDATE_NAME, WHATS_NEW } from "../../changelog.js";
+import type { LocaleCode } from "../../locale/locale_list.ts";
 import type { MIDIFile } from "../utils/drop_file_handler.ts";
 import {
     DEFAULT_SAVED_SETTINGS,
     type SavedSettings
-} from "../../server/saved_settings.ts";
-import { readSampleRateParam } from "../utils/sample_rate_param.ts";
+} from "../../../server/saved_settings.ts";
+import { URLParamUtils } from "../utils/url_params.ts";
+import { isMobile } from "../utils/is_mobile.ts";
+import { themeList } from "../themes/theme_list.ts";
+import { prepareDownloadDialog } from "./demo_download.ts";
 
 /**
  * Demo_main.js
@@ -52,11 +54,20 @@ window.SPESSASYNTH_VERSION = packageJson.version || "UNKNOWN";
 fileInput.value = "";
 fileInput.focus();
 
+// Added 1 to force a reset (v4.2.0)
+const localStorageName = "spessasynth-settings-1";
+
 // IndexedDB stuff
 const dbName = "spessasynth-db";
 const objectStoreName = "soundFontStore";
 
 let sfBuffer: ArrayBuffer | undefined = undefined;
+
+// Load update title
+const updateTitle = document.querySelector("#update_title");
+if (updateTitle) {
+    updateTitle.textContent = UPDATE_NAME;
+}
 
 // Load what's new
 const whatsNew = document.querySelector("#whats_new_content");
@@ -106,8 +117,7 @@ async function loadLastSoundFontFromDatabase(): Promise<
 
             request.addEventListener("success", () => {
                 const result = request.result as
-                    | { data: ArrayBuffer }
-                    | undefined;
+                    { data: ArrayBuffer } | undefined;
                 if (!result) {
                     resolve(undefined);
                     return;
@@ -118,6 +128,18 @@ async function loadLastSoundFontFromDatabase(): Promise<
     });
 }
 
+/**
+ * Shows the sound bank parsing error.
+ * The message can contain text from the file, so it is never parsed as HTML.
+ */
+function showSoundFontError(element: HTMLElement, error: string) {
+    const pre = document.createElement("pre");
+    pre.style.fontFamily = "monospace";
+    pre.style.fontWeight = "bold";
+    pre.textContent = error;
+    element.replaceChildren("Error parsing soundfont: ", pre);
+}
+
 function changeIcon(html: string, disableAnimation = true) {
     const icon = loading.querySelectorAll(".loading_icon")[0] as HTMLElement;
     icon.innerHTML = html;
@@ -125,10 +147,13 @@ function changeIcon(html: string, disableAnimation = true) {
 }
 
 async function saveSoundFontToIndexedDB(arr: ArrayBuffer) {
-    const check = arr.slice(8, 12);
-    const dec = new TextDecoder().decode(check).toLowerCase();
-    if (dec !== "sfbk" && dec !== "sfpl" && dec !== "dls ") {
-        console.warn("Not viable to save!");
+    const d = new TextDecoder();
+    const fourcc = arr.slice(0, 4);
+    const offset = d.decode(fourcc) === "RIFF" ? 8 : 12;
+    const check = arr.slice(offset, offset + 4);
+    const dec = d.decode(check).toLowerCase();
+    if (dec !== "sfbk" && dec !== "sfpk" && dec !== "dls " && dec !== "sfen") {
+        console.warn(`Not saving file. Unknown fourcc ${dec}`);
         return;
     }
     return new Promise<void>((solve) => {
@@ -157,11 +182,18 @@ let context: AudioContext;
 async function demoInit(initLocale: LocaleCode) {
     // Initialize the locale management system. do it here because we want it ready before all js classes do their things
     const localeManager = new LocaleManager(initLocale);
+    prepareDownloadDialog(downloadButton, localeManager);
+    const sampleRate = URLParamUtils.getSampleRate();
     try {
-        context = new AudioContext({
-            sampleRate: readSampleRateParam()
-        });
+        context = new AudioContext({ sampleRate });
     } catch (error) {
+        // Reload with a safe value if it isn't set
+        if (sampleRate !== URLParamUtils.DEFAULT_SAMPLE_RATE) {
+            URLParamUtils.setParam(
+                URLParamUtils.SAMPLE_RATE,
+                URLParamUtils.DEFAULT_SAMPLE_RATE.toString()
+            );
+        }
         changeIcon(getExclamationSvg(256));
         loadingMessage.textContent = localeManager.getLocaleString(
             "locale.synthInit.noWebAudio"
@@ -184,21 +216,26 @@ async function demoInit(initLocale: LocaleCode) {
             "locale.synthInit.loadingBundledSoundfont"
         );
         loadingMessage.textContent = sFontLoadMessage;
+        progressBar.classList.add("active");
         try {
             soundFontBuffer = await fetchFont(
                 `soundfonts/${SF_NAME}`,
                 (percent: number) => {
                     loadingMessage.textContent = `${sFontLoadMessage} ${percent}%`;
+                    progressBar.style.setProperty(
+                        "--progress",
+                        `${percent / 100}`
+                    );
                 }
             );
         } catch (error) {
             console.error("Error loading bundled:", error);
-            soundFontBuffer = await BasicSoundBank.getSampleSoundBankFile();
+            soundFontBuffer = BasicSoundBank.getSampleSoundBankFile();
         }
 
-        progressBar.style.width = "0";
+        progressBar.classList.remove("active");
     } else {
-        console.info("Loaded the soundfont from the database succesfully");
+        console.info("Loaded the soundfont from the database successfully");
     }
     sfBuffer = soundFontBuffer;
     if (!loadedFromDb) {
@@ -241,13 +278,14 @@ async function demoInit(initLocale: LocaleCode) {
                 };
             });
         } else {
-            titleMessage.innerHTML = `Error parsing soundfont: <pre style='font-family: monospace; font-weight: bold;'>${e}</pre>`;
+            showSoundFontError(titleMessage, e);
         }
-        loadingMessage.innerHTML = `Error parsing soundfont: <pre style='font-family: monospace; font-weight: bold;'>${e}</pre>`;
+        showSoundFontError(loadingMessage, e);
     };
     await window.manager.ready;
 
-    window.manager.synth?.setMasterParameter("voiceCap", voiceCap);
+    window.manager.synth?.setSystemParameter("voiceCap", voiceCap);
+    window.manager.synth?.setLogLevel(false, false, false);
 
     if (fileInput.files?.[0]) {
         await startMidi(fileInput.files);
@@ -273,7 +311,7 @@ async function fetchFont(url: string | URL, callback: (p: number) => unknown) {
     }
     const size = Number.parseInt(response.headers.get("content-length") ?? "0");
     const reader = response.body.getReader();
-    let done = false;
+    let done;
     /**
      * No data array but chunks because gh pages sends the wrong size?
      */
@@ -310,7 +348,7 @@ async function startMidi(midiFiles: FileList | File[]) {
     let fName;
     fName =
         midiFiles[0].name.length > 20
-            ? midiFiles[0].name.slice(0, 21) + "..."
+            ? midiFiles[0].name.slice(0, 20) + "..."
             : midiFiles[0].name;
     if (midiFiles.length > 1) {
         fName += ` and ${midiFiles.length - 1} others`;
@@ -325,15 +363,10 @@ async function startMidi(midiFiles: FileList | File[]) {
             fileName: file.name
         });
     }
-    window.manager.synth?.setLogLevel(false, false, false);
 
     window.manager.play(parsed);
 
     exportButton.style.display = "flex";
-    exportButton.addEventListener(
-        "click",
-        window.manager.showExportMenu.bind(window.manager)
-    );
 }
 
 /**
@@ -341,7 +374,7 @@ async function startMidi(midiFiles: FileList | File[]) {
  * (only on the local edition that's why it's here and not in the demo_main.js)
  */
 function saveSettings(settingsData: SavedSettings) {
-    localStorage.setItem("spessasynth-settings", JSON.stringify(settingsData));
+    localStorage.setItem(localStorageName, JSON.stringify(settingsData));
     console.info("saved as", settingsData);
 }
 
@@ -362,8 +395,16 @@ window.rememberVoiceCap = (cap: number) => {
 window.saveSettings = saveSettings;
 
 // Load saved settings
-let savedJson = localStorage.getItem("spessasynth-settings");
-savedJson ??= JSON.stringify(DEFAULT_SAVED_SETTINGS);
+let savedJson = localStorage.getItem(localStorageName);
+if (savedJson === null) {
+    const defaults = structuredClone(DEFAULT_SAVED_SETTINGS);
+    // If on mobile, start with a two octave keyboard
+    if (isMobile) {
+        defaults.keyboard.keyRange = { min: 53, max: 77 };
+        defaults.renderer.keyRange = { min: 53, max: 77 };
+    }
+    savedJson = JSON.stringify(defaults);
+}
 const saved = JSON.parse(savedJson) as SavedSettings;
 if (saved !== null) {
     /**
@@ -372,6 +413,18 @@ if (saved !== null) {
     window.savedSettings = new Promise((resolve) => {
         resolve(saved);
     });
+}
+// Apply the saved theme right away so the loading screen already uses it
+if (saved?.interface?.theme in themeList) {
+    document.documentElement.dataset.theme = saved.interface.theme;
+    document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute(
+            "content",
+            getComputedStyle(document.documentElement).getPropertyValue(
+                "--top-color-end"
+            )
+        );
 }
 // Get locale from saved settings or browser: "en-US" will turn into just "en"
 const initLocale: LocaleCode = saved?.interface?.language
@@ -386,8 +439,16 @@ fileInput.focus();
 sfUpload.style.display = "none";
 fileUpload.style.display = "none";
 
-async function playDemoSong(fileName: string) {
-    if (!window.manager) {
+interface DemoSong {
+    name: string;
+    fileName: string;
+    credits: string;
+    loop?: boolean;
+    fullMIDISupport: boolean;
+}
+
+async function playDemoSong(song: DemoSong) {
+    if (!window.manager?.synth) {
         throw new Error("Unexpected lack of manager!");
     }
     titleMessage.textContent = window.manager.localeManager.getLocaleString(
@@ -395,13 +456,17 @@ async function playDemoSong(fileName: string) {
     );
     const r = await fetch(
         "https://spessasus.github.io/spessasynth-demo-songs/demo_songs/" +
-            fileName
+            song.fileName
     );
-    if (window.manager.synth) {
-        window.manager.synth.disableGSNPRNParams();
+    if (!song.fullMIDISupport) {
+        window.manager.synth.setSystemParameter("nrpnParamLock", true);
+        window.manager.synth.setSystemParameter("drumLock", true);
     }
     // noinspection JSCheckFunctionSignatures
-    await startMidi([new File([await r.arrayBuffer()], fileName)]);
+    await startMidi([new File([await r.arrayBuffer()], song.fileName)]);
+    setTimeout(() => {
+        window.manager?.seqUI?.setLoopState?.(song?.loop ?? false);
+    }, 500);
 }
 
 await demoInit(initLocale);
@@ -472,7 +537,7 @@ sfInput.addEventListener("change", (e) => {
                 throw error;
             }
             window.manager.sfError = (e) => {
-                loadingMessage.innerHTML = `Error parsing soundfont: <pre style='font-family: monospace; font-weight: bold;'>${e}</pre>`;
+                showSoundFontError(loadingMessage, e);
                 changeIcon(getExclamationSvg(256));
                 console.error(e);
             };
@@ -492,7 +557,9 @@ sfInput.addEventListener("change", (e) => {
 
             // Wait to make sure that the animation has finished
             const elapsed = performance.now() / 1000 - parseStart;
-            await new Promise((r) => setTimeout(r, 1000 - elapsed));
+            await new Promise((r) =>
+                setTimeout(r, Math.max(0, (1 - elapsed) * 1000))
+            );
             // DONE
             changeIcon(getCheckSvg(256));
             loadingMessage.textContent =
@@ -510,19 +577,18 @@ sfInput.addEventListener("change", (e) => {
         })();
     }, ANIMATION_REFLOW_TIME);
 });
+
+// Add export event listener
+exportButton.addEventListener("click", () => {
+    if ("manager" in window && window.manager instanceof Manager) {
+        window.manager.showExportMenu();
+    }
+});
+
 demoSongButton.addEventListener("click", async () => {
     if (!window.manager) {
         throw new Error("Unexpected lack of manager!");
     }
-    const contents: NotificationContent[] = [
-        {
-            type: "button",
-            textContent: "Bundled SoundFont Credits",
-            onClick: () => {
-                window.open("https://schristiancollins.com/generaluser.php");
-            }
-        }
-    ];
     titleMessage.textContent = window.manager.localeManager.getLocaleString(
         "locale.synthInit.genericLoading"
     );
@@ -533,55 +599,94 @@ demoSongButton.addEventListener("click", async () => {
     )
         // eslint-disable-next-line unicorn/no-await-expression-member
         .text();
-    const songsJSON = JSON.parse(songs) as {
-        name: string;
-        fileName: string;
-        credits: string;
-    }[];
-    for (const song of songsJSON) {
-        contents.push({
-            type: "button",
-            textContent: song.name,
-            onClick: (n) => {
-                if (!window.manager) {
-                    throw new Error("Unexpected lack of manager!");
+    const songsJSON = JSON.parse(songs) as DemoSong[];
+    const manager = window.manager;
+    titleMessage.textContent = manager.localeManager.getLocaleString(
+        "locale.demoTitleMessage"
+    );
+    const notification = showNotification(
+        manager.localeManager.getLocaleString("locale.demoSongButton"),
+        [
+            {
+                type: "button",
+                textContent: "Bundled SoundFont Credits",
+                onClick: () => {
+                    window.open(
+                        "https://schristiancollins.com/generaluser.php"
+                    );
                 }
-                closeNotification(n.id);
-                showNotification(
-                    window.manager.localeManager.getLocaleString(
-                        "locale.credits"
-                    ),
-                    [
-                        {
-                            type: "text",
-                            textContent: song.credits.replace("\n", "\r\n\r\n"),
-                            attributes: { style: "white-space: pre-line;" }
-                        },
-                        {
-                            type: "button",
-                            textContent: "Ok",
-                            onClick: (n) => {
-                                closeNotification(n.id);
-                            }
-                        }
-                    ],
-                    999_999,
-                    true,
-                    undefined,
-                    undefined,
-                    async () => {
-                        await playDemoSong(song.fileName);
-                    }
-                );
+            }
+        ],
+        999_999
+    );
+
+    // Each song expands to show its credits and a play button
+    const list = document.createElement("div");
+    list.classList.add("notification_list");
+    for (const [index, song] of songsJSON.entries()) {
+        const entry = document.createElement("div");
+        entry.classList.add("notification_list_entry");
+        entry.style.setProperty("--i", index.toString());
+
+        const header = document.createElement("button");
+        header.classList.add("notification_list_item");
+        header.textContent = song.name;
+        header.setAttribute("aria-expanded", "false");
+
+        // The collapsed details stay out of the tab order
+        const details = document.createElement("div");
+        details.classList.add("notification_list_details");
+        details.inert = true;
+        const detailsBody = document.createElement("div");
+        const credits = document.createElement("p");
+        credits.textContent = song.credits.replace("\n", "\r\n\r\n");
+        const playButton = document.createElement("button");
+        playButton.classList.add("green_button");
+        manager.localeManager.bindObjectProperty(
+            playButton,
+            "textContent",
+            "locale.demoSongPlay"
+        );
+        playButton.addEventListener("click", async () => {
+            closeNotification(notification.id);
+            await playDemoSong(song);
+        });
+        detailsBody.append(credits);
+        detailsBody.append(playButton);
+        details.append(detailsBody);
+
+        header.addEventListener("click", () => {
+            const opening = !entry.classList.contains("open");
+            for (const other of list.querySelectorAll<HTMLElement>(
+                ".notification_list_entry.open"
+            )) {
+                other.classList.remove("open");
+                other
+                    .querySelector(".notification_list_item")
+                    ?.setAttribute("aria-expanded", "false");
+                other.querySelector<HTMLElement>(
+                    ".notification_list_details"
+                )!.inert = true;
+            }
+            if (opening) {
+                entry.classList.add("open");
+                header.setAttribute("aria-expanded", "true");
+                details.inert = false;
             }
         });
-    }
 
-    showNotification(
-        window.manager.localeManager.getLocaleString("locale.demoSongButton"),
-        contents,
-        999_999,
-        true,
-        undefined
+        entry.append(header);
+        entry.append(details);
+        list.append(entry);
+    }
+    const removalNote = document.createElement("p");
+    removalNote.classList.add("notification_description");
+    manager.localeManager.bindObjectProperty(
+        removalNote,
+        "textContent",
+        "locale.demoSongRemoval"
     );
+    notification.div
+        .querySelector(".notification_content")!
+        .prepend(removalNote, list);
 });

@@ -1,10 +1,25 @@
 import type { MIDIFile } from "../utils/drop_file_handler.ts";
 import { Manager } from "../manager/manager.js";
 import { showNotification } from "../notification/notification.js";
-import { LocaleManager } from "../locale/locale_manager.js";
-import type { LocaleCode } from "../locale/locale_files/locale_list.ts";
-import type { SavedSettings } from "../../server/saved_settings.ts";
-import { readSampleRateParam } from "../utils/sample_rate_param.ts";
+import { LocaleManager } from "../manager/locale_manager.js";
+import type { LocaleCode } from "../../locale/locale_list.ts";
+import type { SavedSettings } from "../../../server/saved_settings.ts";
+import {
+    API,
+    type LastUsedSoundBankBody,
+    PAGE_HEADER,
+    type SoundBankEntry,
+    soundBankURL,
+    type VersionInfo
+} from "../../../server/api.ts";
+import {
+    checkForUpdate,
+    keepServerAlive,
+    prepareSoundBankFolderButton,
+    showEmptyFolderPrompt
+} from "./local_binary_features.ts";
+import { URLParamUtils } from "../utils/url_params.ts";
+import { SpessaLog } from "spessasynth_core";
 
 declare global {
     // noinspection JSUnusedGlobalSymbols
@@ -29,11 +44,12 @@ declare global {
  * (only on the local edition that's why it's here and not in the demo_main.js)
  */
 window.saveSettings = (settingsData: SavedSettings) => {
-    void fetch("/savesettings", {
-        method: "POST",
+    void fetch(API.settings, {
+        method: "PUT",
         body: JSON.stringify(settingsData),
         headers: {
-            "Content-type": "application/json; charset=UTF-8"
+            "Content-type": "application/json; charset=UTF-8",
+            [PAGE_HEADER]: "1"
         }
     });
 };
@@ -42,7 +58,7 @@ window.saveSettings = (settingsData: SavedSettings) => {
  * Reads the settings
  */
 window.savedSettings = new Promise((resolve) => {
-    void fetch("/getsettings").then((response) =>
+    void fetch(API.settings).then((response) =>
         response.json().then((parsedSettings) => {
             resolve(parsedSettings as SavedSettings);
         })
@@ -50,7 +66,7 @@ window.savedSettings = new Promise((resolve) => {
 });
 
 window.isLocalEdition = true;
-
+SpessaLog.setLogLevel(true, true, true);
 const titleMessage = document.querySelector<HTMLHeadingElement>("#title")!;
 const progressBar = document.querySelector<HTMLDivElement>("#progress_bar")!;
 const fileInput = document.querySelector<HTMLInputElement>("#midi_file_input")!;
@@ -65,11 +81,26 @@ fileInput.focus();
 let synthReady = false;
 
 // Load version
-const v = await fetch("/getversion");
-window.SPESSASYNTH_VERSION = await v.text();
+const v = await fetch(API.version);
+const versionInfo = (await v.json()) as VersionInfo;
+window.SPESSASYNTH_VERSION = versionInfo.version;
 
 let soundBankBufferCurrent: ArrayBuffer | undefined = undefined;
-const context = new AudioContext({ sampleRate: readSampleRateParam() });
+
+let context: AudioContext;
+const sampleRate = URLParamUtils.getSampleRate();
+try {
+    context = new AudioContext({ sampleRate });
+} catch (error) {
+    // Reload with a safe value if it isn't set
+    if (sampleRate !== URLParamUtils.DEFAULT_SAMPLE_RATE) {
+        URLParamUtils.setParam(
+            URLParamUtils.SAMPLE_RATE,
+            URLParamUtils.DEFAULT_SAMPLE_RATE.toString()
+        );
+    }
+    throw error;
+}
 
 let titleString = "TITLE STRING";
 
@@ -77,14 +108,14 @@ async function fetchFont(
     fileName: string,
     callback: (arg0: number) => unknown
 ): Promise<ArrayBuffer> {
-    const response = await fetch(`${fileName}`);
+    const response = await fetch(soundBankURL(fileName));
     if (!response.ok || !response.body) {
         titleMessage.textContent = "Error downloading soundfont!";
         throw new Error(response.statusText);
     }
     const size = Number.parseInt(response.headers.get("content-length") ?? "0");
     const reader = response.body.getReader();
-    let done = false;
+    let done;
     let dataArray;
     try {
         dataArray = new Uint8Array(size);
@@ -127,7 +158,7 @@ async function startMidi(midiFiles: FileList) {
     let fName;
     fName =
         midiFiles[0].name.length > 20
-            ? midiFiles[0].name.slice(0, 21) + "..."
+            ? midiFiles[0].name.slice(0, 20) + "..."
             : midiFiles[0].name;
     if (midiFiles.length > 1) {
         fName += ` and ${midiFiles.length - 1} others`;
@@ -145,10 +176,6 @@ async function startMidi(midiFiles: FileList) {
     titleMessage.style.fontStyle = "italic";
     manager.play(parsed);
     exportButton.style.display = "flex";
-    exportButton.addEventListener(
-        "click",
-        manager.showExportMenu.bind(window.manager)
-    );
 }
 
 const initManagerSF = async () => {
@@ -156,6 +183,7 @@ const initManagerSF = async () => {
         return;
     }
     titleMessage.textContent = "Initializing...";
+    progressBar.classList.add("active", "indeterminate");
     if (window.manager) {
         await window.manager.reloadSf(soundBankBufferCurrent);
     } else {
@@ -179,6 +207,7 @@ const initManagerSF = async () => {
 
     synthReady = true;
     titleMessage.textContent = titleString;
+    progressBar.classList.remove("active", "indeterminate");
 };
 
 /**
@@ -186,16 +215,18 @@ const initManagerSF = async () => {
  */
 async function replaceFont(fontName: string) {
     titleMessage.textContent = "Loading soundfont...";
+    progressBar.style.setProperty("--progress", "0");
+    progressBar.classList.add("active");
     const data = await fetchFont(fontName, (percent) => {
-        progressBar.style.width = `${(percent / 100) * titleMessage.offsetWidth}px`;
+        progressBar.style.setProperty("--progress", `${percent / 100}`);
         console.info(`Loading sound bank: ${percent}%`);
     });
 
     titleMessage.textContent = "Parsing soundfont...";
     soundBankBufferCurrent = data;
-    progressBar.style.width = "0";
     // Prompt the user to click if needed
     if (context.state === "suspended") {
+        progressBar.classList.remove("active");
         titleMessage.textContent = "Press anywhere to start the app";
         return;
     }
@@ -220,14 +251,17 @@ document.onclick = async () => {
     await initManagerSF();
 };
 
-let soundBanks: { name: string; size: number }[] = [];
-
 const localeManager = new LocaleManager(
     navigator.language.split("-")[0].toLowerCase() as LocaleCode
 );
 
+if (versionInfo.binary) {
+    keepServerAlive(localeManager);
+    void checkForUpdate(localeManager);
+}
+
 // Load the list of soundfonts
-const r = await fetch("soundfonts");
+const r = await fetch(API.soundBanks);
 
 if (!r.ok) {
     titleMessage.textContent = "Error fetching soundfonts!";
@@ -235,27 +269,69 @@ if (!r.ok) {
 }
 const sfSelector = document.querySelector<HTMLSelectElement>("#sf_selector")!;
 
-soundBanks = JSON.parse(await r.text()) as { name: string; size: number }[];
+const soundBanks = (await r.json()) as SoundBankEntry[];
 
 if (!(0 in soundBanks)) {
-    titleMessage.textContent = "No files in the 'soundfonts' folder!";
+    if (versionInfo.binary) {
+        titleMessage.textContent = localeManager.getLocaleString(
+            "locale.localEdition.emptyFolder.title"
+        );
+        showEmptyFolderPrompt(localeManager);
+    } else {
+        titleMessage.textContent = "No files in the 'soundfonts' folder!";
+    }
     throw new Error("No sound banks exist in the folder");
 }
 
-for (const sf of soundBanks) {
-    const option = document.createElement("option");
-    option.value = sf.name;
-    let displayName = sf.name;
-    if (displayName.length > 29) {
-        displayName = displayName.slice(0, 30) + "...";
+function fillSoundBankSelector(banks: SoundBankEntry[]) {
+    const selected = sfSelector.value;
+    sfSelector.replaceChildren();
+    for (const sf of banks) {
+        const option = document.createElement("option");
+        option.value = sf.name;
+        let displayName = sf.name;
+        if (displayName.length > 29) {
+            displayName = displayName.slice(0, 30) + "...";
+        }
+        option.textContent = displayName;
+        sfSelector.append(option);
     }
-    option.textContent = displayName;
-    sfSelector.append(option);
+    if (banks.some((b) => b.name === selected)) {
+        sfSelector.value = selected;
+    }
+}
+
+fillSoundBankSelector(soundBanks);
+
+if (versionInfo.binary) {
+    prepareSoundBankFolderButton(
+        localeManager,
+        versionInfo.platform,
+        async () => {
+            const response = await fetch(API.soundBanks, { cache: "no-store" });
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+            const banks = (await response.json()) as SoundBankEntry[];
+            // Keep the old list rather than an empty selector
+            if (0 in banks) {
+                fillSoundBankSelector(banks);
+            }
+        }
+    );
 }
 
 sfSelector.addEventListener("change", async () => {
     sfSelector.blur();
-    await fetch(`/setlastsf2?sfname=${encodeURIComponent(sfSelector.value)}`);
+    const body: LastUsedSoundBankBody = { name: sfSelector.value };
+    await fetch(API.lastUsedSoundBank, {
+        method: "PUT",
+        body: JSON.stringify(body),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8",
+            [PAGE_HEADER]: "1"
+        }
+    });
     if (window.manager?.seq?.midiData) {
         window.manager.seq.pause();
     }
@@ -283,4 +359,11 @@ fileInput.addEventListener("change", async () => {
         return;
     }
     await startMidi(fileInput.files);
+});
+
+// Add export event listener
+exportButton.addEventListener("click", () => {
+    if ("manager" in window && window.manager instanceof Manager) {
+        window.manager.showExportMenu();
+    }
 });

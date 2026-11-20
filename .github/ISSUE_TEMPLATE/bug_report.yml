@@ -42,12 +42,20 @@ body:
           label: Reproduction steps
           description: Steps to reproduce the behavior.
           placeholder: |
-              1. Load this...
-              1. Click this...
-              1. Play '...'
-              1. See error...
+              1. Load this MIDI file...
+              2. Click this button...
+              3. See error...
       validations:
           required: true
+    - type: textarea
+      id: offending_files
+      attributes:
+          label: Offending MIDI / sound bank files
+          description: |
+              If the bug is related to a specific MIDI or sound bank files, please attach them here. 
+              Make sure to compress them to `.zip`.
+      validations:
+          required: false
     - type: dropdown
       id: os
       attributes:
@@ -58,7 +66,6 @@ body:
               - Linux
               - MacOS
               - Android
-              - iOS
               - Other (please specify in additional info)
       validations:
           required: false
@@ -68,12 +75,18 @@ body:
           label: Browser Engine
           description: Which browser are you using? This is very important!
           options:
-              - Chromium (Chrome, Edge, Brave, Opera, etc.)
-              - Gecko (Firefox, Librewolf, Waterfox, etc.)
-              - WebKit (Safari on MacOS, all browsers on iOs)
+              - Chromium (Google Chrome, Microsoft Edge, Brave, Opera, etc.)
+              - Gecko (Firefox, Zen Browser, Librewolf, etc.)
               - Other (please specify in additional info)
       validations:
           required: true
+    - type: input
+      id: browser_version
+      attributes:
+          label: Browser Version
+          description: What version of the browser are you using? This is very important!
+      validations:
+          required: false # Some users may not know how to find this
     - type: textarea
       attributes:
           label: Additional info

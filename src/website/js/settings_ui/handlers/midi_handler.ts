@@ -1,6 +1,7 @@
 import { isMobile } from "../../utils/is_mobile.js";
 import type { SpessaSynthSettings } from "../settings.ts";
 import { MIDIDeviceHandler } from "spessasynth_lib";
+import { Ut } from "../../utils/other.js";
 
 export function _createMidiSettingsHandler(this: SpessaSynthSettings) {
     MIDIDeviceHandler.createMIDIDeviceHandler()
@@ -16,14 +17,14 @@ export function _createMidiSettingsHandler(this: SpessaSynthSettings) {
                 const input = this.htmlControls.midi.inputSelector;
                 const output = this.htmlControls.midi.outputSelector;
                 // Hide everything
-                input.classList.add("hidden");
-                output.classList.add("hidden");
-                parent
-                    .querySelector("label[for='midi_input_selector']")!
-                    .classList.add("hidden");
-                parent
-                    .querySelector("label[for='midi_output_selector']")!
-                    .classList.add("hidden");
+                Ut.hide(input);
+                Ut.hide(output);
+                Ut.hide(
+                    parent.querySelector("label[for='midi_input_selector']")
+                );
+                Ut.hide(
+                    parent.querySelector("label[for='midi_output_selector']")
+                );
 
                 // Show error
                 const errorMessage = document.createElement("h3");
@@ -77,7 +78,7 @@ export function _createMidiInputHandler(
 }
 
 /**
- * Note that using sequi allows us to get the sequencer after it has been created
+ * Note that using seq ui allows us to get the sequencer after it has been created
  */
 export function _createMidiOutputHandler(
     this: SpessaSynthSettings,
@@ -87,30 +88,77 @@ export function _createMidiOutputHandler(
         return;
     }
     const select = this.htmlControls.midi.outputSelector;
+    const ports = this.htmlControls.midi.portSelectors;
+    const extraPorts = this.synthui.outputPorts.extra;
+    const portWrapper = this.htmlControls.midi.portSelectorsWrapper;
+    Ut.hide(portWrapper);
+
+    // Add inputs to selects
     for (const output of handler.outputs.values()) {
         const option = document.createElement("option");
         option.value = output.id;
         option.textContent = output.name ?? output.manufacturer ?? "NO NAME";
         select.append(option);
     }
+    for (const port of ports) {
+        for (const output of handler.outputs.values()) {
+            const option = document.createElement("option");
+            option.value = output.id;
+            option.textContent =
+                output.name ?? output.manufacturer ?? "NO NAME";
+            port.append(option);
+        }
+    }
 
+    // Primary handle, switches between spessa and MIDI
     select.addEventListener("change", () => {
         if (!handler.outputs) {
             return;
         }
-        for (const o of handler.outputs) {
-            o[1].disconnect(this.seq);
-        }
+        this.synthui.outputPorts.primary?.disconnect(this.seq);
+        this.synthui.outputPorts.primary = undefined;
         const target = handler.outputs.get(select.value);
         // QoL: Disable skipping to first note-on for external MIDI playback
         // A lot MIDIs space out the messages to not overflow the MIDI cables.
         // Spessasynth doesn't have this limitation.
         if (target) {
-            target.connect(this.seq);
+            this.synthui.outputPorts.primary = target;
+            target.connect(this.seq, 0);
             this.seq.skipToFirstNoteOn = false;
+            this.seq.externalMIDIPlayback = true;
+            Ut.show(portWrapper);
         } else {
             this.seq.skipToFirstNoteOn = true;
+            this.seq.externalMIDIPlayback = false;
+            Ut.hide(portWrapper);
+            // The extra ports are hidden, so disconnect them as well
+            for (let p = 0; p < ports.length; p++) {
+                extraPorts[p]?.disconnect(this.seq);
+                extraPorts[p] = undefined;
+                ports[p].selectedIndex = 0;
+            }
         }
         this.saveSettings();
     });
+
+    // Extra ports handle
+
+    for (let p = 0; p < ports.length; p++) {
+        const port = ports[p];
+        // Primary is 0
+        const portNumber = p + 1;
+
+        port.addEventListener("change", () => {
+            if (!handler.outputs) {
+                return;
+            }
+            extraPorts[p]?.disconnect(this.seq);
+            extraPorts[p] = undefined;
+            const target = handler.outputs.get(port.value);
+            if (target) {
+                extraPorts[p] = target;
+                target.connect(this.seq, portNumber * 16);
+            }
+        });
+    }
 }

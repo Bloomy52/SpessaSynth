@@ -1,0 +1,319 @@
+import {
+    type GSInsertionController,
+    gsInsertionEffectData
+} from "./gs_effect_params.ts";
+import { Meter } from "./synthui_meter.ts";
+import { LOCALE_PATH, SynthesizerUI } from "../synthetizer_ui.ts";
+import { Ut } from "../../utils/other.js";
+import { type GSInsertionParameterMessage, MIDIUtils } from "spessasynth_core";
+
+export function createGSInsertionController(
+    this: SynthesizerUI
+): GSInsertionController {
+    const insertionEffects = gsInsertionEffectData;
+
+    const send = (
+        parameter: GSInsertionParameterMessage["parameter"],
+        value: number | boolean
+    ) => {
+        if (this.insertionLock) {
+            this.synth.setSystemParameter("gsInsertionLock", false);
+        }
+        this.synth.systemExclusive(
+            MIDIUtils.setGSInsertionParameter(0, parameter, value).data
+        );
+        if (this.insertionLock) {
+            this.synth.setSystemParameter("gsInsertionLock", true);
+        }
+    };
+
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("effect_wrapper", "synthui_tab");
+    Ut.hide(wrapper);
+    // Title
+    const effectTitle = document.createElement("h2");
+    this.locale.bindObjectProperty(
+        effectTitle,
+        "textContent",
+        LOCALE_PATH + "effectsConfig.insertion.title"
+    );
+    wrapper.append(effectTitle);
+
+    // Subtitle
+    const effectSubtitle = document.createElement("h4");
+    this.locale.bindObjectProperty(
+        effectSubtitle,
+        "textContent",
+        LOCALE_PATH + "effectsConfig.insertion.description"
+    );
+    wrapper.append(effectSubtitle);
+
+    // Type/lock wrapper
+    const typeLockWrapper = document.createElement("div");
+    typeLockWrapper.style.display = "flex";
+    typeLockWrapper.style.flexWrap = "wrap";
+    wrapper.append(typeLockWrapper);
+
+    // Effect selector
+    const effectSelector = document.createElement("select");
+    effectSelector.classList.add("synthui_button");
+    for (const insertionEffect of insertionEffects) {
+        const opt = document.createElement("option");
+        opt.textContent = insertionEffect.name;
+        opt.value = insertionEffect.type.toString();
+        effectSelector.append(opt);
+    }
+    effectSelector.addEventListener("change", () => {
+        send("type", Number.parseInt(effectSelector.value));
+    });
+    typeLockWrapper.append(effectSelector);
+
+    // Lock
+    const lock = document.createElement("button");
+    lock.classList.add("synthui_button");
+    this.locale.bindObjectProperty(
+        lock,
+        "textContent",
+        LOCALE_PATH + "effectsConfig.toggleLock.title"
+    );
+    this.locale.bindTooltip(
+        lock,
+        LOCALE_PATH + "effectsConfig.toggleLock.description"
+    );
+    const toggleLock = () => {
+        this.insertionLock = !this.insertionLock;
+        this.synth.setSystemParameter("gsInsertionLock", this.insertionLock);
+        lock.style.color = this.insertionLock ? "red" : "";
+        // Lock the buttons as well
+        for (const channel of this.synth.midiChannels) {
+            channel.lockMIDIParameter("efxAssign", this.insertionLock);
+        }
+    };
+    lock.addEventListener("click", toggleLock);
+    typeLockWrapper.append(lock);
+
+    // Send EQ switch, on by default
+    const sendEQSwitch = document.createElement("button");
+    sendEQSwitch.classList.add("synthui_button", "enabled");
+    this.locale.bindObjectProperty(
+        sendEQSwitch,
+        "textContent",
+        LOCALE_PATH + "effectsConfig.insertion.sendEQSwitch.title"
+    );
+    this.locale.bindTooltip(
+        sendEQSwitch,
+        LOCALE_PATH + "effectsConfig.insertion.sendEQSwitch.description"
+    );
+    sendEQSwitch.addEventListener("click", () => {
+        send("sendEQSwitch", !sendEQSwitch.classList.contains("enabled"));
+    });
+    typeLockWrapper.append(sendEQSwitch);
+
+    // Effect description
+    const effectDescription = document.createElement("p");
+    effectDescription.classList.add("effect_description");
+    const updateEffectDescription = () => {
+        const v = Number.parseInt(effectSelector.value);
+        const effect = insertionEffects.find((fx) => fx.type === v);
+        effectDescription.textContent = effect?.desc ?? "";
+    };
+    updateEffectDescription();
+    effectSelector.addEventListener("change", updateEffectDescription);
+    wrapper.append(effectDescription);
+
+    // Effect sends
+    const effectSendsWrapper = document.createElement("div");
+    effectSendsWrapper.classList.add(
+        "effect_wrapper_params",
+        "global_insertion"
+    );
+    const reverb = new Meter({
+        color: "",
+        locale: this.locale,
+        localePath: LOCALE_PATH + "effectsConfig.insertion.sendLevelToReverb",
+        min: 0,
+        max: 127,
+        def: 40,
+        onEdit: (v) => {
+            send("sendLevelToReverb", Math.round(v));
+        }
+    });
+    effectSendsWrapper.append(reverb.div);
+    const chorus = new Meter({
+        color: "",
+        locale: this.locale,
+        localePath: LOCALE_PATH + "effectsConfig.insertion.sendLevelToChorus",
+        min: 0,
+        max: 127,
+        def: 0,
+        onEdit: (v) => {
+            send("sendLevelToChorus", Math.round(v));
+        }
+    });
+    effectSendsWrapper.append(chorus.div);
+    const delay = new Meter({
+        color: "",
+        locale: this.locale,
+        localePath: LOCALE_PATH + "effectsConfig.insertion.sendLevelToDelay",
+        min: 0,
+        max: 127,
+        def: 0,
+        onEdit: (v) => {
+            send("sendLevelToDelay", Math.round(v));
+        }
+    });
+    effectSendsWrapper.append(delay.div);
+
+    wrapper.append(effectSendsWrapper);
+
+    // Parameters
+    const params = new Map<
+        number,
+        { controllerGroups: HTMLElement[]; controllers: Map<number, Meter> }
+    >();
+    for (const insertionEffect of insertionEffects) {
+        const controllers = new Map<number, Meter>();
+        const controllerGroups = new Array<HTMLElement>();
+        for (const paramGroup of insertionEffect.params) {
+            const controllerGroup = document.createElement("div");
+            controllerGroup.classList.add("effect_wrapper_params");
+            Ut.hide(controllerGroup);
+            wrapper.append(controllerGroup);
+            controllerGroups.push(controllerGroup);
+
+            for (const param of paramGroup) {
+                const meter = new Meter({
+                    color: "",
+                    rawText: param.p + ": ",
+                    min: param.r?.min ?? 0,
+                    max: param?.r?.max ?? 127,
+                    def: param.d,
+                    onEdit: (v) => {
+                        // Effect parameter 0 is at address 3
+                        send(param.a - 3, Math.round(v));
+                    },
+                    transform: param?.td
+                });
+                controllerGroup.append(meter.div);
+                controllers.set(param.a - 3, meter);
+            }
+        }
+        params.set(insertionEffect.type, {
+            controllers,
+            controllerGroups: controllerGroups
+        });
+    }
+
+    // -----------------
+    // EFX ASSIGN SECTION
+    // ------------------
+
+    // EFX assign title
+    const efxAssignTitle = document.createElement("h2");
+    this.locale.bindObjectProperty(
+        efxAssignTitle,
+        "textContent",
+        LOCALE_PATH + "effectsConfig.insertion.activeChannels.title"
+    );
+    wrapper.append(efxAssignTitle);
+
+    // EFX assign subtitle
+    const efxAssignSubtitle = document.createElement("h4");
+    this.locale.bindObjectProperty(
+        efxAssignSubtitle,
+        "textContent",
+        LOCALE_PATH + "effectsConfig.insertion.activeChannels.description"
+    );
+    wrapper.append(efxAssignSubtitle);
+
+    // EFX assign buttons
+    const efxAssignButtons = new Array<HTMLDivElement>();
+
+    // Wrapped, so the channel number stays as set
+    const createEFXAssign = (channelNumber: number) => {
+        // Create the button here
+        const efxAssign = document.createElement("div");
+        efxAssign.innerHTML = `<pre>${channelNumber + 1}</pre>`;
+        this.locale.bindTooltip(
+            efxAssign,
+            LOCALE_PATH + "channelController.insertionEffectButton.description",
+            [channelNumber + 1]
+        );
+        efxAssign.classList.add("controller_element", "mute_button");
+
+        // Style border after channel color
+        efxAssign.style.setProperty(
+            "--btn-border-color",
+            this.channelColors[channelNumber % 16]
+        );
+
+        efxAssign.addEventListener("click", () => {
+            const isFX = !efxAssign.classList.contains("red");
+            const ch = channelNumber % 16;
+            const offset = channelNumber - ch;
+            if (this.insertionLock) {
+                this.synth.midiChannels[channelNumber].lockMIDIParameter(
+                    "efxAssign",
+                    false
+                );
+            }
+            for (const message of MIDIUtils.setChannelMIDIParameter(
+                0,
+                ch,
+                "gs",
+                "efxAssign",
+                isFX
+            )) {
+                this.synth.systemExclusive(message.data, offset);
+            }
+            if (this.insertionLock) {
+                this.synth.midiChannels[channelNumber].lockMIDIParameter(
+                    "efxAssign",
+                    true
+                );
+            }
+        });
+        return efxAssign;
+    };
+
+    let channelNumber = 0;
+    let efxAssignWrapper: HTMLDivElement | null = null;
+    const addNewChannel = () => {
+        if (channelNumber % 16 === 0) {
+            // Add a new port (new row)
+            efxAssignWrapper = document.createElement("div");
+            efxAssignWrapper.classList.add(
+                "effect_wrapper_params",
+                "efx_assign"
+            );
+            wrapper.append(efxAssignWrapper);
+        }
+
+        // Sanity check
+        if (!efxAssignWrapper) {
+            return;
+        }
+
+        const efxAssign = createEFXAssign(channelNumber);
+        efxAssignWrapper.append(efxAssign);
+        efxAssignButtons.push(efxAssign);
+        channelNumber++;
+    };
+    // Create first 16 sends
+    for (let i = 0; i < 16; i++) {
+        addNewChannel();
+    }
+
+    return {
+        wrapper,
+        effectSelector,
+        sendEQSwitch,
+        reverb,
+        chorus,
+        delay,
+        efxAssignButtons,
+        addNewChannel,
+        toggleLock,
+        effects: params
+    };
+}

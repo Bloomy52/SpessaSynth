@@ -5,16 +5,7 @@
 </p>
 
 **SpessaSynth** is a SoundFont2-based real-time synthesizer written in TypeScript, previously pure JavaScript.
-
-<h1 align="center"><a href="https://spessasus.github.io/SpessaSynth/">Live Demo (no download needed!)</a></h1>
-
-<p align='center'><b><!--suppress HtmlUnknownAnchorTarget -->
-<a href='#windows'>Download Local Edition</a></b></p>
-
-<h2 align="center">Made with SpessaSynth</h2>
-<p align="center">
-<a href="https://www.youtube.com/watch?v=Cu_A1IR65yQ"><img width='500' alt="Watch the YouTube video" src="https://github.com/user-attachments/assets/d73c0585-67eb-4490-ad39-839b22ab7577"></a>
-</p>
+This is a repository for the web application, it used to be a monorepo containing the entire project.
 
 **SpessaSynth Project index**
 
@@ -23,30 +14,67 @@
 - [SpessaSynth](https://github.com/spessasus/SpessaSynth) (you are here) - online/local MIDI player/editor application
 - [SpessaFont](https://github.com/spessasus/SpessaFont) - online SF2/DLS editor
 
-<h1 align='center'>Web App / Local Edition</h1>
+<h1 align='center'>SpessaSynth Web App</h1>
 <p align='center'>The complete GUI for spessasynth_lib, allowing remixing, experimenting, and playing MIDIs in the coolest way possible.</p>
 
 <p align='center'>
 <img src="https://github.com/user-attachments/assets/42f5cf2d-0b5b-492d-8929-064d55d8c11f" alt="SpessaSynth promotional image" width="75%">
 </p>
+
+<h3 align='center'>v4.4.0 The XG Update is here!</h3>
+<p align='center'>Featuring full Yamaha XG effects with a new GUI, GS User Drum Sets, video export, a modular theme system,
+and a redesigned settings menu!</p>
+
+<h2 align="center"><a href="https://spessasus.github.io/SpessaSynth/">Online Version (no download needed!)</a></h2>
+
+<!--suppress HtmlUnknownAnchorTarget -->
+<h2 align="center"><a href='#local-edition'>Download Local Edition</a></h2>
+<p align="center">
+<a href='https://spessasus.github.io/SpessaSynth/SpessaSynth-win-x64.zip'>Windows</a> ·
+<a href='https://spessasus.github.io/SpessaSynth/SpessaSynth-linux-x64.tar.gz'>Linux x64</a> ·
+<a href='https://spessasus.github.io/SpessaSynth/SpessaSynth-linux-arm64.tar.gz'>Linux ARM64</a> ·
+<a href='https://spessasus.github.io/SpessaSynth/SpessaSynth-LocalEdition.zip'>ZIP (needs Node.js)</a>
+</p>
+
+<h2 align="center">Made with SpessaSynth</h2>
+<p align="center">
+<a href="https://www.youtube.com/watch?v=Cu_A1IR65yQ"><img width='500' alt="Watch the YouTube video" src="https://github.com/user-attachments/assets/d73c0585-67eb-4490-ad39-839b22ab7577"></a>
+</p>
+
 <h3 align='center'><a href='https://github.com/spessasus/SpessaSynth/wiki/How-To-Use-App'>Usage Guide</a></h3>
+
+<h3 align='center'>Supported Browsers</h2>
+
+- **Chromium-based:** such as Google Chrome, Microsoft Edge, Brave, Opera, etc.
+- **Gecko-based:** such as Mozilla Firefox, Floorp, Zen, Waterfox, Librewolf, etc.
+- **Chrome for Android/Chromebook**
+- **Firefox for Android**
+
 <h2 align='center'>Features</h2>
 
 - **Visualization of the played sequence:** with cool effects like visual pitch bend and note-on effects!
+- **Video export:** Render the visualization, keyboard and audio to WebM or MP4!
+- **Full Yamaha XG and GS effects:** Control reverb, chorus, delay and insertion effects from the GUI!
+- **GS User Drum Set support:** Custom drum kits configured by MIDI files play and render correctly!
+- **Themes:** Choose from many dark and light themes, with matching note colors!
+- **Redesigned settings menu:** Easier to navigate and customize!
 - **Playable keyboard with various sizes:** mobile friendly!
 - **Integrated controller for the synthesizer with numerous options:** Edit instruments, controllers, and more!
 - **MIDI Lyrics support:** Karaoke!
 - **Kar Lyrics support:** Karaoke but fancy!
 - **ASS Subtitle support:** Karaoke but even fancier!
 - **Music player mode:** with support for album covers in .rmi files!
-- Mobile-friendly UI (_synthesizer performance not optimized for mobile... don't tell anyone!_)
-- **Multiple language support:**
+- **Mobile-friendly UI:** Enjoy SpessaSynth on your phone!
+- **Extensive language support:**
     - English
     - Polish
-    - Japanese
-    - French (translated by Davy Triponney)
+    - Japanese (translated by src3453)
+    - French (translated by Davy Triponney & Samuel Louf)
     - Portuguese (translated by Lucas Gabriel)
     - Simplified Chinese (By 懒洋君)
+    - Italian (By ItsFilyy)
+    - Russian (By TGaming03)
+    - Georgian (By TGaming03)
     - Custom locale management system, created specifically for this project
 - **Description of buttons:** Hover over the buttons to see what they do!
 - **`Web MIDI API` support:** Use your physical MIDI devices!
@@ -54,6 +82,7 @@
 - **Numerous exporting options:**
     - Render the MIDI file (modified or unmodified) to .wav
     - Render each channel as a separate .wav file
+    - Render the visualization to a video (.webm or .mp4)
     - Export the modified MIDI file to .mid
     - Export the trimmed SoundFont to .sf2
     - Export a DLS file to .sf2
@@ -83,16 +112,52 @@ MARKDOWN VERSION
 
 </p>
 
-### Local Edition Download
+### Local Edition
 
 _SpessaSynth: Local Edition_ comes with easier soundfont management than the demo version,
-also allowing to use it offline! [You can download it here.](https://spessasus.github.io/SpessaSynth/SpessaSynth-LocalEdition.zip)
+also allowing to use it offline!
 
 > [!IMPORTANT]
 > Firefox is recommended due to Chromium's 4GB memory limit.
 > A decent computer is also recommended for high-polyphony sound banks.
 
 [Recommended high-quality SoundFont for Local Edition](https://musical-artifacts.com/artifacts/1176)
+
+#### Standalone version (Windows and Linux)
+
+SpessaSynth now comes as native executables in addition to the old Node.js version!
+
+Download the file for your system from the links at the top (or the Download button on the website),
+unpack it and start `SpessaSynth`. Nothing else needs to be installed!
+It opens in your browser and closes by itself once you close its last tab,
+fully automatically!
+
+- **First start:** if you have no sound banks yet, SpessaSynth can download the default GeneralUser GS for you.
+- **Sound banks and settings** are kept in a folder for your user:
+    - Windows: `%LOCALAPPDATA%\SpessaSynth`
+    - Linux: `~/.local/share/SpessaSynth` (or `$XDG_DATA_HOME/SpessaSynth`)
+- **Portable mode:** create a folder named `data` next to the executable and everything is kept there instead.
+  The `SPESSASYNTH_HOME` environment variable picks any other folder.
+- **Automatic updates:** SpessaSynth checks for a new version on start and asks before updating itself.
+  Set `"autoUpdate": true` in `config.json` to update without asking,
+  or `"checkForUpdates": false` (or start it with `--no-update-check`) to turn the check off.
+- **Other devices on your network:** start it with `--lan`. It then keeps running until you close its window.
+
+> [!WARNING]
+>
+> **Windows** may show a SmartScreen warning since the executable is not signed.
+> Choose "More info", then "Run anyway".
+>
+> **Linux:** some file managers do not start programs on double-click. Run `./SpessaSynth` from a terminal once,
+> or use `./SpessaSynth --install-launcher` (or the button in the sound bank folder menu) to add it to your
+> applications menu.
+>
+> macOS is not supported by the standalone version yet. Use the ZIP version there.
+
+#### ZIP version (needs Node.js)
+
+[The ZIP version](https://spessasus.github.io/SpessaSynth/SpessaSynth-LocalEdition.zip) runs anywhere Node.js does.
+It keeps its sound banks in its own `soundfonts` folder.
 
 ### Building from source
 
@@ -114,7 +179,10 @@ The build files:
 - local-dev: Local Edition sources with sourcemaps. For development.
 - server: the Local Edition server. It is here so it can use the root "soundfonts" folder. This is what `npm start` invokes.
 
-[If you would like to help translate SpessaSynth, please read this guide (and thank you!)](src/website/js/locale/locale_files/README.md)
+`npm run build:binary` builds the standalone executables into `dist/` as well. It needs [Go](https://go.dev/),
+see `src/executable/go.mod` for the version.
+
+[If you would like to help translate SpessaSynth, please read this guide (and thank you!)](src/website/locale/README.md)
 
 **If you like this project, consider giving it a star. It really helps out!**
 
@@ -125,11 +193,13 @@ The build files:
 - [Meltysynth](https://github.com/sinshu/meltysynth) - for the initial low-pass filter implementation
 - [RecordingBlogs](https://www.recordingblogs.com/) - for detailed explanations on MIDI messages
 - [stbvorbis.js](https://github.com/hajimehoshi/stbvorbis.js) - for the Vorbis decoder
-- [sl-web-ogg](https://github.com/erikh2000/sl-web-ogg) - for the Ogg Vorbis encoder
+- [wasm-media-encoders](https://github.com/arseneyr/wasm-media-encoders) - for the Ogg Vorbis encoder
 - [Bootstrap Icons](https://icons.getbootstrap.com/) - for the icons
 - [fflate](https://github.com/101arrowz/fflate) - for the MIT DEFLATE implementation
 - [JSZip](https://github.com/Stuk/jszip) - for the ZIP creation library
+- [mediabunny](https://github.com/Vanilagy/mediabunny) - For the media toolkit
 - [foo_midi](https://github.com/stuerp/foo_midi) - for useful resources on XMF file format
+- [corrscope](https://github.com/corrscope/corrscope) - for the correlation trigger algorithm used to stabilize the waveforms
 - [Composers](https://github.com/spessasus/spessasynth-demo-songs#readme) - for the demo songs
 - [Falcosoft](https://falcosoft.hu) - for help with the RMIDI format
 - [Christian Collins](https://schristiancollins.com) - for the bundled GeneralUserGS soundfont and various bug reports regarding the synthesizer
@@ -143,14 +213,49 @@ The build files:
 - [3.0.0](https://github.com/spessasus/SpessaSynth/commit/b7f9e382a2f62eef462755ac9ebfe603663e4106) - Moved to audioWorkletGlobalScope for offline audio rendering
 - [4.0.0](https://github.com/spessasus/SpessaSynth/commit/95ce4c5ad4a429d6de75426a42bbdf9dc353e9de) - Rewrote the project in TypeScript
 
-### License
+## License
 
-Copyright © 2026 Spessasus.
+Copyright © 2026 Spessasus
 Licensed under the Apache-2.0 License.
+
+#### Third-party licenses
+
+The waveform stabilization trigger (`src/website/js/renderer/base/waveform_trigger.ts`)
+is a modified port of the correlation trigger from [corrscope](https://github.com/corrscope/corrscope),
+used under the following license:
+
+```
+BSD 2-Clause License
+
+Copyright (c) 2018-2020+, nyanpasu64
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
 #### Legal
 
 This project is in no way endorsed or otherwise affiliated with the MIDI Manufacturers Association,
-Creative Technology Ltd. or E-mu Systems, Inc., or any other organization mentioned.
+Roland Corporation, Yamaha Corporation, Creative Technology Ltd. or E-mu Systems, Inc.,
+or any other organization mentioned.
 SoundFont® is a registered trademark of Creative Technology Ltd.
 All other trademarks are the property of their respective owners.
