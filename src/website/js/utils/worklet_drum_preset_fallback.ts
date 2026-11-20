@@ -1,3 +1,6 @@
+// Added by Louie (Bloomy52), 2026: Channel 10 preset fallback for audio worklets.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import type { SpessaSynthProcessor } from "spessasynth_core";
 import { installDrumPresetFallback } from "./drum_preset_fallback.ts";
 

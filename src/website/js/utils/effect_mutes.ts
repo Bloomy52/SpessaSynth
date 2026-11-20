@@ -1,3 +1,6 @@
+// Added by Louie (Bloomy52), 2026: Global reverb and chorus mute logic.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 export interface EffectMuteSettings {
     reverbMuted: boolean;
     chorusMuted: boolean;

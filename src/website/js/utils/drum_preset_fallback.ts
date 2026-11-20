@@ -1,3 +1,6 @@
+// Added by Louie (Bloomy52), 2026: Channel 10 preset fallback for melodic-only banks.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import type {
     MIDIPatch,
     MIDISystem,

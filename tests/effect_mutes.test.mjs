@@ -1,3 +1,6 @@
+// Added by Louie (Bloomy52), 2026: Tests for effect mutes.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 import assert from "node:assert/strict";
 import test from "node:test";
 import { SpessaSynthProcessor } from "spessasynth_core";

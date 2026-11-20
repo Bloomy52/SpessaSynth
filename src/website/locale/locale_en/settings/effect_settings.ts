@@ -1,3 +1,6 @@
+// Added by Louie (Bloomy52), 2026: English strings for effect settings.
+// Based on SpessaSynth by spessasus, licensed under Apache-2.0.
+
 export const effectSettings = {
     title: "Effect settings",
 
