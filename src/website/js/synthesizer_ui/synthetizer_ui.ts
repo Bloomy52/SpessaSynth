@@ -31,6 +31,7 @@ import { getEmptyMicSvg, getVolumeSvg } from "../utils/icons.ts";
 import { createAdvancedConfiguration } from "./methods/create_advanced_configuration.ts";
 import { Selector } from "./methods/synthui_selector.ts";
 import type { Synthesizer } from "../utils/synthesizer.ts";
+import { EffectMutes } from "../utils/effect_mutes.ts";
 import {
     type GSChorusController,
     gsChorusEffectData,
@@ -139,6 +140,7 @@ type LibMIDIOutput =
         : never;
 
 export class SynthesizerUI {
+    public readonly effectMutes: EffectMutes;
     public readonly channelColors: string[];
     public onProgramChange?: (channel: number) => unknown;
     public onTranspose?: () => unknown;
@@ -241,6 +243,9 @@ export class SynthesizerUI {
         this.locale = localeManager;
         this.keyboard = keyboard;
         this.synth = synth;
+        this.effectMutes = new EffectMutes((effect, gain) =>
+            synth.setSystemParameter(effect, gain)
+        );
         this.sequencer = seq;
         this.renderer = renderer;
 
@@ -676,6 +681,30 @@ export class SynthesizerUI {
 
             // Tab selector
             controlsWrapper.append(tabSelector);
+
+            // Global effect mutes stay accessible in both GS and XG modes.
+            for (const effect of ["reverbGain", "chorusGain"] as const) {
+                const label = document.createElement("label");
+                label.classList.add("synthui_button");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                const text = document.createElement("span");
+                const localePath = LOCALE_PATH + "effectMutes." + effect;
+                this.locale.bindObjectProperty(
+                    text,
+                    "textContent",
+                    localePath + ".title"
+                );
+                this.locale.bindTooltip(label, localePath + ".description");
+                checkbox.addEventListener("change", () =>
+                    this.effectMutes.setMuted(effect, checkbox.checked)
+                );
+                this.effectMutes.onChange.push(() => {
+                    checkbox.checked = this.effectMutes.isMuted(effect);
+                });
+                label.append(checkbox, text);
+                controlsWrapper.append(label);
+            }
 
             this.mainMeters = [
                 this.volumeController,

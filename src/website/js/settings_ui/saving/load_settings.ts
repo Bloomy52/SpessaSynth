@@ -21,6 +21,7 @@ export async function _loadSettings(this: SpessaSynthSettings): Promise<void> {
         savedSettingsPartial,
         DEFAULT_SAVED_SETTINGS
     );
+    this.synthui.effectMutes.load(savedSettings.effects);
 
     // Apply the theme first, as changing between dark and light overrides drawActiveNotes
     const theme =

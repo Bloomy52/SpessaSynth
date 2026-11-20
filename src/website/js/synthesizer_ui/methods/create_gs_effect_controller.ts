@@ -51,10 +51,23 @@ export function createGSEffectController<
         transform: (value) => `${Math.floor(value * 100)}%`,
         onEdit: (value) => {
             const vRounded = Math.round(value * 100) / 100;
-            this.synth.setSystemParameter(data.gainName, vRounded);
+            if (
+                data.gainName === "reverbGain" ||
+                data.gainName === "chorusGain"
+            ) {
+                this.effectMutes.setGain(data.gainName, vRounded);
+            } else {
+                this.synth.setSystemParameter(data.gainName, vRounded);
+            }
             gainLevel.update(vRounded);
         }
     });
+    const effect = data.gainName;
+    if (effect === "reverbGain" || effect === "chorusGain") {
+        this.effectMutes.onChange.push(() =>
+            gainLevel.update(this.effectMutes.settings[effect])
+        );
+    }
     gainWrapper.append(gainLevel.div);
 
     // Macro/lock wrapper

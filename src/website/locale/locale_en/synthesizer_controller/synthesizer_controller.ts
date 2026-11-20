@@ -2,6 +2,18 @@ import { channelControllerLocale } from "./channel_controller.js";
 import { effectsConfig } from "./effects_config.js";
 
 export const synthesizerControllerLocale = {
+    effectMutes: {
+        reverbGain: {
+            title: "Mute reverb",
+            description:
+                "Mute synthesized reverb in playback and exports. Remembers your choice; unmuting restores the gain. Recorded sample ambience is unaffected."
+        },
+        chorusGain: {
+            title: "Mute chorus",
+            description:
+                "Mute synthesized chorus in playback and exports. Remembers your choice; unmuting restores the gain. Recorded sample effects are unaffected."
+        }
+    },
     toggleButton: {
         title: "Synthesizer controller (S)",
         description: "Show the synthesizer controller"
