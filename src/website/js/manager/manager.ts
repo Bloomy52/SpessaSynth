@@ -336,6 +336,14 @@ export class Manager {
 
         synth.connect(this.audioDelay);
         await synth.isReady;
+
+        // Disable global audio effects.
+        synth.setMasterParameter("reverbGain", 0);
+        synth.setMasterParameter("chorusGain", 0);
+        // Synth.setMasterParameter("delayGain", 0);
+
+
+        
         await synth.reverbProcessor?.isReady;
         await this.setSF(soundBank);
 
