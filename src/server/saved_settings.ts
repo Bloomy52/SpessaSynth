@@ -1,5 +1,9 @@
 import type { LocaleCode } from "../website/locale/locale_list.ts";
 import {
+    DEFAULT_EFFECT_MUTES,
+    type EffectMuteSettings
+} from "../website/js/utils/effect_mutes.ts";
+import {
     type RendererMode,
     rendererModes
 } from "../website/js/renderer/base/renderer_modes.ts";
@@ -20,6 +24,7 @@ export interface ConfigFile {
 }
 
 export interface SavedSettings {
+    effects: EffectMuteSettings;
     keyboard: {
         keyRange: {
             min: number;
@@ -67,6 +72,7 @@ export interface SavedSettings {
 }
 
 export const DEFAULT_SAVED_SETTINGS: SavedSettings = {
+    effects: { ...DEFAULT_EFFECT_MUTES },
     keyboard: {
         theme: DEFAULT_KEYBOARD_THEME,
         selectedChannel: 0,

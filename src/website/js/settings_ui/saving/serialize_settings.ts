@@ -17,6 +17,7 @@ export function _serializeSettings(this: SpessaSynthSettings): SavedSettings {
             : (this.htmlControls.interface.languageSelector
                   .value as LocaleCode);
     return {
+        effects: this.synthui.effectMutes.settings,
         renderer: {
             renderingMode: this.renderer.rendererMode,
             noteFallingTime: this.renderer.noteFallingTime,

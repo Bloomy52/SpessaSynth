@@ -424,12 +424,9 @@ export class Manager {
 
         synth.connect(this.audioDelay);
         await synth.isReady;
-
-        // Disable global audio effects.
-        synth.setSystemParameter("reverbGain", 0);
-        synth.setSystemParameter("chorusGain", 0);
-        // Synth.setMasterParameter("delayGain", 0);
-
+        // Unity gain only scales requested reverb; it does not add a send.
+        // CC91 defaults to zero. Honor MIDI/SoundFont sends in playback and exports.
+        synth.setSystemParameter("reverbGain", 1);
         await this.setSF(soundBank);
 
         // Create seq

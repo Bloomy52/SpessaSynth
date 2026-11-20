@@ -465,6 +465,7 @@ export class SpessaSynthSettings {
         // If window.savedSettings exists, load it
         void this.loadSettings().then(() => {
             this.createHandlers();
+            this.synthui.effectMutes.onChange.push(() => this.saveSettings());
         });
 
         let fullscreen = false;

@@ -68,10 +68,13 @@ export function createConvolverReverbController(this: SynthesizerUI) {
         transform: (value) => `${Math.floor(value * 100)}%`,
         onEdit: (value) => {
             const rounded = Math.round(value * 100) / 100;
-            this.synth.setSystemParameter("reverbGain", rounded);
+            this.effectMutes.setGain("reverbGain", rounded);
             gain.update(rounded);
         }
     });
+    this.effectMutes.onChange.push(() =>
+        gain.update(this.effectMutes.settings.reverbGain)
+    );
     const gainWrapper = document.createElement("div");
     gainWrapper.append(gain.div);
     wrapper.append(gainWrapper);
